@@ -17,6 +17,19 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    flavorDimensions "exit"
+
+    productFlavors {
+        tst {
+            dimension "exit"
+            applicationId 'com.fonfon.umbra'
+        }
+        demo {
+            dimension "exit"
+            applicationId 'com.fonfon.umbra'
+        }
+    }
 }
 
 dependencies {
