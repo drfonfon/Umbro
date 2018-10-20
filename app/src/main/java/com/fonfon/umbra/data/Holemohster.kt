@@ -39,7 +39,7 @@ class Holemohster {
             if (dist < 4 && dist > 2) {
                 val pos = amb.playPosition
                 amb.stop()
-                amb.volume = (if (dist < 2.0f) dist / 2.0f else 0.0f) / 2
+                amb.volume = (if (dist < 4) dist / 4 else 0.0f) / 2
                 amb.set3dPosition(x.toFloat(), y.toFloat(), 0f)
                 amb.playPosition = pos
                 amb.play()
@@ -51,7 +51,7 @@ class Holemohster {
             }
         }
 
-        return dist != 0.0f && dist < 2.0
+        return dist != 0.0f && dist < 2
     }
 
 

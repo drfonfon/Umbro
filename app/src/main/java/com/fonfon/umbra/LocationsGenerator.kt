@@ -1,13 +1,14 @@
 package com.fonfon.umbra
 
 import android.location.Location
+import com.fonfon.umbra.data.Holemohster
 import java.util.*
 import kotlin.collections.ArrayList
 
 object LocationsGenerator {
 
   val radius = 15
-  val countMax = 15
+  val countMax = 10
   val random = Random()
 
   fun randomLocation(loc: Location): Location {

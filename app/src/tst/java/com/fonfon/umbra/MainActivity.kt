@@ -4,6 +4,8 @@ import android.graphics.Color
 import android.location.Location
 import android.os.Bundle
 import com.fonfon.umbra.compass.BearingToNorthProvider
+import com.fonfon.umbra.data.Holemohster
+import com.fonfon.umbra.data.Portal
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback

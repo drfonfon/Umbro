@@ -52,6 +52,8 @@ class PresenterMain(val activity: LocationActivity) {
         Ck.init(activity)
         Sound.set3dAttenuation(AttenuationMode.Linear, 0.5f, 15f, 0.1f)
 
+        effects = Effects()
+
         activity.locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult?) {
                 super.onLocationResult(result)
@@ -127,11 +129,8 @@ class PresenterMain(val activity: LocationActivity) {
     }
 
     fun gameStart() {
-        effects = Effects()
         portal = Portal()
-
         effects.start()
-
         start = true
         init = true
     }

@@ -15,7 +15,7 @@ class Effects {
     val randomEffect: Sound
     get() = Sound.newBankSound(bank, random.nextInt(bank.numSounds)).apply {
         this.is3dEnabled = true
-        this.volume = 0.5f
+        this.volume = 0.1f
         this.set3dPosition(0f, 5f, 100f)
     }
 

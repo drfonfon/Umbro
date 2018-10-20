@@ -32,7 +32,7 @@ class Portal {
 
         val pos = sound.playPosition
         sound.stop()
-        sound.volume = if (dist < 10) dist / 10 else 0.2f
+        sound.volume = if (dist < 10) dist / 10 else 0.1f
         sound.set3dPosition(x.toFloat(), y.toFloat(), 0f)
         sound.playPosition = pos
         sound.play()
