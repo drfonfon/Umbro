@@ -57,7 +57,7 @@ class MainActivity : LocationActivity() {
 
             val backgroundColorAnimator = ObjectAnimator.ofObject(
                 content_main, "backgroundColor",
-                ArgbEvaluator(), Color.BLACK, Color.WHITE
+                ArgbEvaluator(), Color.BLACK, Color.GREEN
             )
             backgroundColorAnimator.duration = 100
             backgroundColorAnimator.addListener(object : Animator.AnimatorListener {
@@ -68,7 +68,7 @@ class MainActivity : LocationActivity() {
                 override fun onAnimationEnd(animation: Animator?) {
                     val anim = ObjectAnimator.ofObject(
                         content_main, "backgroundColor",
-                        ArgbEvaluator(), Color.WHITE, Color.BLACK
+                        ArgbEvaluator(), Color.WHITE, Color.GREEN
                     )
                     anim.duration = 1000
                     anim.start()

@@ -7,26 +7,26 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.WindowManager
 import com.crickettechnology.audio.AttenuationMode
+import com.crickettechnology.audio.Bank
 import com.crickettechnology.audio.Ck
 import com.crickettechnology.audio.Sound
+import com.fonfon.arduino.Serial
+import com.fonfon.umbra.LocationsGenerator.random
 import com.fonfon.umbra.compass.BearingToNorthProvider
-import com.fonfon.umbra.data.Effects
-import com.fonfon.umbra.data.Holemohster
-import com.fonfon.umbra.data.Player
-import com.fonfon.umbra.data.Portal
+import com.fonfon.umbra.data.*
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
 import java.util.*
 
 
-
 class PresenterMain(val activity: LocationActivity) {
 
-    val r = Random().nextInt(LocationsGenerator.countMax)
     val v = activity.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator?
     val bearingToNorthProvider = BearingToNorthProvider(activity, 50, 5.0, 300)
 
-    lateinit var effects: Effects
+    private var effects: Effects
+    private var dog: Dog
+    private var ambient: Ambient
 
     var start = false
     var init = true
@@ -36,16 +36,19 @@ class PresenterMain(val activity: LocationActivity) {
     var win = {}
 
     var onPortal = { loc: Location -> }
+    var onInfected = { loc: Location -> }
     var onEnemy = { loc: Location -> }
     var onLocation = { loc: Location -> }
     var onAzimuth = { az: Double -> }
 
     lateinit var portal: Portal
+    var serial: Serial
 
     lateinit var location: Location
-    var azimuth: Double = 0.0
+    private var azimuth: Double = 0.0
 
-    val enemies = ArrayList<Holemohster>()
+    val enemies = ArrayList<HoleMonster>()
+    lateinit var infected: Infected
 
     init {
         activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -53,6 +56,9 @@ class PresenterMain(val activity: LocationActivity) {
         Sound.set3dAttenuation(AttenuationMode.Linear, 0.5f, 15f, 0.1f)
 
         effects = Effects()
+        serial = Serial(activity)
+        ambient = Ambient()
+        dog = Dog()
 
         activity.locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult?) {
@@ -64,12 +70,19 @@ class PresenterMain(val activity: LocationActivity) {
 
                     if (start) {
                         portal.location?.let { loc ->
-                            val p = portal.process(location, bearingToNorthProvider.azimuth, bearingToNorthProvider.declination)
+                            val p = portal.process(
+                                location,
+                                bearingToNorthProvider.azimuth,
+                                bearingToNorthProvider.declination
+                            )
                             if (p.first) {
                                 stopGame(true)
                             }
                             if (p.second) {
+                                serial.resumePulse()
                                 vibrate()
+                            } else {
+                                serial.pausePulse()
                             }
                             for (monster in enemies) {
                                 if (monster.process(
@@ -81,22 +94,19 @@ class PresenterMain(val activity: LocationActivity) {
                                     stopGame(false)
                                 }
                             }
+                            if (infected.process(
+                                    it,
+                                    bearingToNorthProvider.azimuth,
+                                    bearingToNorthProvider.declination
+                                )
+                            ) {
+                                stopGame(false)
+                            }
+                            onInfected(infected.location!!)
                         }
 
                         if (init) {
-                            val locs = LocationsGenerator.genetateLocations(it)
-                            for (loc in locs) {
-                                if (locs.indexOf(loc) == r) {
-                                    portal.location = loc
-                                    onPortal(loc)
-                                } else {
-                                    val monster = Holemohster()
-                                    monster.location = loc
-                                    enemies.add(monster)
-                                    onEnemy(loc)
-                                }
-
-                            }
+                            init(it)
                             init = false
                         }
                     }
@@ -115,7 +125,10 @@ class PresenterMain(val activity: LocationActivity) {
                         stopGame(true)
                     }
                     if (p.second) {
+                        serial.resumePulse()
                         vibrate()
+                    } else {
+                        serial.pausePulse()
                     }
 
                     for (monster in enemies) {
@@ -130,7 +143,10 @@ class PresenterMain(val activity: LocationActivity) {
 
     fun gameStart() {
         portal = Portal()
+        infected = Infected()
         effects.start()
+        ambient.start()
+        dog.start()
         start = true
         init = true
     }
@@ -139,29 +155,38 @@ class PresenterMain(val activity: LocationActivity) {
         Ck.resume()
         if (start) {
             effects.start()
+            ambient.start()
         }
+        serial.resume()
         bearingToNorthProvider.start()
     }
 
     fun pause() {
         Ck.suspend()
         effects.stop()
+        dog.stop()
+        ambient.stop()
         bearingToNorthProvider.stop()
     }
 
     fun destroy() {
         Ck.shutdown()
+        serial.stopPulse()
     }
 
     fun stopGame(win: Boolean) {
         if (win) {
             this.win()
-            Player().win.play()
+            Thread { Sound.newBankSound(Bank.newBank("player.ckb"), 0).play() }.start()
+            serial.winCommand()
         } else {
             this.died()
-            Player().death.play()
+            Thread { Sound.newBankSound(Bank.newBank("player.ckb"), 1).play() }.start()
+            serial.loseCommand()
         }
         effects.stop()
+        dog.stop()
+        ambient.stop()
         start = false
     }
 
@@ -169,8 +194,53 @@ class PresenterMain(val activity: LocationActivity) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             v?.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
         } else {
-            //deprecated in API 26
             v?.vibrate(100)
+        }
+    }
+
+    fun init(startLoc: Location) {
+        val locs = LocationsGenerator.generateLocations(startLoc)
+
+        //find portal
+        var ndis = startLoc.distanceTo(locs[0])
+        var nloc = locs[0]
+
+        for(loc in locs) {
+            val d = startLoc.distanceTo(loc)
+            if (d > ndis) {
+                ndis = d
+                nloc = loc
+            }
+        }
+
+        portal.location = nloc
+        onPortal(nloc)
+        serial.startPulse()
+
+        locs.remove(nloc)
+
+        //find run monster
+        ndis = startLoc.distanceTo(locs[0])
+        nloc = locs[0]
+
+        for(loc in locs) {
+            val d = startLoc.distanceTo(loc)
+            if (d > ndis) {
+                ndis = d
+                nloc = loc
+            }
+        }
+
+        infected.location = nloc
+        onInfected(nloc)
+
+        locs.remove(nloc)
+
+        for (loc in locs) {
+            val monster = HoleMonster()
+            monster.location = loc
+            enemies.add(monster)
+            onEnemy(loc)
         }
     }
 }

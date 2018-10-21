@@ -24,10 +24,13 @@ android {
         tst {
             dimension "exit"
             applicationId 'com.fonfon.umbra'
+            applicationIdSuffix ".admin"
+            resValue "string", "app_name", "Umbra Admin"
         }
         demo {
             dimension "exit"
             applicationId 'com.fonfon.umbra'
+            resValue "string", "app_name", "Umbra"
         }
     }
 }

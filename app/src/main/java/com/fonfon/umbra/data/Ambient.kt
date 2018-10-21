@@ -7,25 +7,24 @@ import com.crickettechnology.audio.Sound
 import com.fonfon.umbra.LocationsGenerator.random
 import java.util.*
 
-class Effects {
+class Ambient {
 
-    val bank = Bank.newBank("zvuki.ckb")
+    val sound = Sound.newStreamSound("ambient.mp3").apply {
+        this.is3dEnabled = true
+        this.volume = 0.05f
+    }
 
     val handler = Handler()
     val runable = object : Runnable {
         override fun run() {
-            val sound = Sound.newBankSound(bank, random.nextInt(bank.numSounds)).apply {
-                this.is3dEnabled = true
-                this.volume = 0.1f
-                this.set3dPosition(0f, 5f, 200f)
-            }
+            sound.set3dPosition(0f, 0f, (random.nextInt(200) - 100).toFloat())
             sound.play()
-            handler.postDelayed(this, (random.nextInt(100) + 10000 + sound.lengthMs).toLong())
+            handler.postDelayed(this, (random.nextInt(50000) + 10000 + sound.lengthMs).toLong())
         }
     }
 
     fun start() {
-        handler.postDelayed(runable, (random.nextInt(100) + 10000).toLong())
+        handler.postDelayed(runable, (random.nextInt(50000) + 10000).toLong())
     }
 
     fun stop() {

@@ -13,6 +13,7 @@ class Portal {
     var location: Location? = null
 
     fun process(user: Location, azimuth: Double, declination: Float): Pair<Boolean, Boolean> {
+
         var bearTo = user.bearingTo(location)
         if (bearTo < 0) bearTo += 360
 
@@ -23,19 +24,21 @@ class Portal {
 
         val dist = user.distanceTo(location)
 
-        var x = -1 * dist * Math.cos(Math.toRadians(rotation - 90))
-        val y = -1 * dist * Math.sin(Math.toRadians(rotation - 90))
+        Thread {
+            var x = -1 * dist * Math.cos(Math.toRadians(rotation - 90))
+            val y = -1 * dist * Math.sin(Math.toRadians(rotation - 90))
 
-        if ((rotation > -15 && rotation < 15) || (rotation < -165 && rotation > -165) || (rotation > 165 && rotation < 165)) {
-            x = 0.0
-        }
+            if ((rotation > -15 && rotation < 15) || (rotation < -165 && rotation > -165) || (rotation > 165 && rotation < 165)) {
+                x = 0.0
+            }
 
-        val pos = sound.playPosition
-        sound.stop()
-        sound.volume = if (dist < 10) dist / 10 else 0.1f
-        sound.set3dPosition(x.toFloat(), y.toFloat(), 0f)
-        sound.playPosition = pos
-        sound.play()
+            val pos = sound.playPosition
+            sound.stop()
+            sound.volume = if (dist < 10) dist / 10 else 0.1f
+            sound.set3dPosition(x.toFloat(), y.toFloat(), 0f)
+            sound.playPosition = pos
+            sound.play()
+        }.start()
 
         return Pair(dist < 4, (rotation > -15 && rotation < 15))
     }

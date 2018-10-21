@@ -1,7 +1,6 @@
 package com.fonfon.umbra
 
 import android.location.Location
-import com.fonfon.umbra.data.Holemohster
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -11,7 +10,7 @@ object LocationsGenerator {
   val countMax = 10
   val random = Random()
 
-  fun randomLocation(loc: Location): Location {
+  private fun randomLocation(loc: Location): Location {
 
     // Convert radius from meters to degrees
     val radiusInDegrees = (radius / 111000f).toDouble()
@@ -31,7 +30,7 @@ object LocationsGenerator {
     }
   }
 
-  fun genetateLocations(loc: Location): ArrayList<Location> {
+  fun generateLocations(loc: Location): ArrayList<Location> {
 
     var count = 0
     val locations = ArrayList<Location>()
@@ -39,12 +38,12 @@ object LocationsGenerator {
     while (count < countMax) {
       val location = randomLocation(loc)
       var add = true
-      if (location.distanceTo(loc) < 8) {
+      if (location.distanceTo(loc) < 9) {
         add = false
       }
       if (add) {
         for (l in locations) {
-          if (location.distanceTo(l) < 4) {
+          if (location.distanceTo(l) < 5) {
             add = false
           }
         }
